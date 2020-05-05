@@ -1,0 +1,19 @@
+name: reco-gym
+channels:
+  - pytorch
+  - anaconda
+  - defaults
+  - intel
+dependencies:
+  - notebook
+  - matplotlib
+  - pandas
+  - pytorch
+  - rpy2
+  # - gym=X.Y.Z conda support is missing, use `pip install gym` instead
+  - pip:
+    - gym
+    - absl-py
+    - numba
+    - tqdm
+    - datetime
