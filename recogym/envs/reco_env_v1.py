@@ -14,6 +14,10 @@ from .abstract import AbstractEnv, env_args, organic
 
 # Default arguments for toy environment ------------------------------------
 
+
+debug = False
+className = "envs/reco_env_v1.py"
+
 # inherit most arguments from abstract class
 env_1_args = {
     **env_args,
@@ -88,7 +92,8 @@ class RecoEnv1(AbstractEnv):
     # Update user state to one of (organic, bandit, leave) and their omega (latent factor).
     def update_state(self):
 
-        # print(f"update_state () ---- old state {self.state}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+        if debug:
+            print(f"{className} update_state () ---- old state {self.state}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
 
         old_state = self.state
         self.state = self.rng.choice(3, p=self.state_transition[self.state, :])
@@ -106,39 +111,43 @@ class RecoEnv1(AbstractEnv):
             )
         self.context_switch = old_state != self.state
 
-        # print(f"update_state () ---- new state {self.state}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+        if debug:
+            print(f"{className} update_state () ---- new state {self.state}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
 
 
 
     # Sample a click as response to recommendation when user in BANDIT STATE
     # click ~ Bernoulli().
     def draw_click(self, recommendation):
-
-        # print(f"draw_click () ---- recommendation {recommendation}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+        if debug:
+            print(f"{className} draw_click () ---- recommendation {recommendation}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
 
         # Personalised CTR for every recommended product.
 
         if self.config.change_omega_for_bandits or self.context_switch:
-            print(f"draw_click () ---- self.config.change_omega_for_bandits or self.context_switch")
+            if debug:
+                print(f"{className} draw_click () ---- self.config.change_omega_for_bandits or self.context_switch")
             self.cached_state_seed = (
                     self.beta @ self.omega + self.mu_bandit
             ).ravel()
 
         assert self.cached_state_seed is not None
 
-        print(f"draw_click () ---- cached_state_seed {self.cached_state_seed}")
+        if debug:
+            print(f"{className} draw_click () ---- cached_state_seed {self.cached_state_seed}")
 
         ctr = ff(self.cached_state_seed)
 
-        print(f"draw_click () ---- ctr {ctr}")
-        print(f"draw_click () ---- ctr[recommendation] {ctr[recommendation]}")
+        if debug:
+            print(f"{className} draw_click () ---- ctr {ctr}, ctr[recommendation] {ctr[recommendation]}")
 
         click = self.rng.choice(
             [0, 1],
             p=[1 - ctr[recommendation], ctr[recommendation]]
         )
 
-        print(f"draw_click () ---- return click {click}, recommendation {recommendation}")
+        if debug:
+            print(f"{className} draw_click () ---- return click {click}, recommendation {recommendation}")
 
         return click
 
@@ -147,13 +156,15 @@ class RecoEnv1(AbstractEnv):
     # Sample the next organic product view.
     def update_product_view(self):
 
-        # print(f"update_product_view () ---- START, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+        if debug:
+            print(f"{className} update_product_view () ---- START, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
 
         log_uprob = (self.Gamma @ self.omega + self.mu_organic).ravel()
         log_uprob = log_uprob - max(log_uprob)
         uprob = np.exp(log_uprob)
 
-        print(f"update_product_view () ---- uprob {uprob}")
+        if debug:
+            print(f"{className} update_product_view () ---- uprob {uprob}")
 
         self.product_view = np.int16(
             self.rng.choice(
@@ -162,7 +173,8 @@ class RecoEnv1(AbstractEnv):
             )
         )
 
-        # print(f"update_product_view () ---- product_view updated {self.product_view}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+        if debug:
+            print(f"{className} update_product_view () ---- product_view updated {self.product_view}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
 
 
 

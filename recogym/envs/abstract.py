@@ -30,6 +30,8 @@ env_args = {
     'with_ps_all': False
 }
 
+debug = False
+className = "envs/abstract"
 
 # Static function for squashing values between 0 and 1.
 def f(mat, offset=5):
@@ -112,7 +114,8 @@ class AbstractEnv(gym.Env, ABC):
 
     def generate_organic_sessions(self): # -- RUN CHAIN OF ORGANIC VIEWS !!!
 
-        print(f"generate_organic_sessions () INIT - state {self.state}")
+        if debug:
+            print(f"{className} generate_organic_sessions () INIT - state {self.state}")
 
         # Initialize session.
         session = OrganicSessions()
@@ -182,13 +185,15 @@ class AbstractEnv(gym.Env, ABC):
         # No information to return.
         info = {}
 
-        print(f"step () ---- START action_id {action_id}")
+        if debug:
+            print(f"{className} step () ---- START action_id {action_id}")
 
         if self.first_step:
             assert (action_id is None)
             self.first_step = False
 
-            print(f"step () ---- FIRST STEP => RUN generate_organic_sessions()")
+            if debug:
+                print(f"{className} step () ---- FIRST STEP => RUN generate_organic_sessions()")
 
             sessions = self.generate_organic_sessions() # -- RUN CHAIN OF ORGANIC VIEWS
 
@@ -211,7 +216,8 @@ class AbstractEnv(gym.Env, ABC):
 
         reward = self.draw_click(action_id) # reward = click !
 
-        print(f"step () ---- reward {reward} from action_id {action_id}")
+        if debug:
+            print(f"{className} step () ---- reward {reward} from action_id {action_id}")
 
         self.update_state()
 
@@ -220,18 +226,21 @@ class AbstractEnv(gym.Env, ABC):
 
         # Markov state dependent logic.
 
-        print(f"step () ---- state {self.state}")
+        if debug:
+            print(f"{className} step () ---- state {self.state}")
 
         if self.state == organic:
 
-            print(f"step () ---- RUN generate_organic_sessions()")
+            if debug:
+                print(f"{className} step () ---- RUN generate_organic_sessions()")
 
             sessions = self.generate_organic_sessions() # -- RUN CHAIN OF ORGANIC VIEWS
 
         else:
             sessions = self.empty_sessions
 
-        print(f"step () ---- state {self.state}")
+        if debug:
+            print(f"{className} step () ---- state {self.state}")
 
         return (
             Observation(
@@ -254,7 +263,8 @@ class AbstractEnv(gym.Env, ABC):
     def step_offline(self, observation, reward, done):
         """Call step function wih the policy implemented by a particular Agent."""
 
-        print(f"step_offline ---- START done {done}")
+        if debug:
+            print(f"{className} step_offline ---- START done {done}")
 
         if self.first_step:
             action = None
@@ -262,7 +272,8 @@ class AbstractEnv(gym.Env, ABC):
             assert (hasattr(self, 'agent'))
             assert (observation is not None)
 
-            print(f"step_offline ---- get obs sessions {observation.sessions()}, reward {reward}")
+            if debug:
+                print(f"{className} step_offline ---- get obs sessions {observation.sessions()}, reward {reward}")
 
             if self.agent:
 
@@ -302,7 +313,8 @@ class AbstractEnv(gym.Env, ABC):
                 action['a'] if action is not None else None
             )
 
-            print(f"step_offline ---- return action {action}, obs sessions {observation.sessions()}, done {done}")
+            if debug:
+                print(f"{className} step_offline ---- return action {action}, obs sessions {observation.sessions()}, done {done}")
 
             return action, observation, reward, done, info
 
