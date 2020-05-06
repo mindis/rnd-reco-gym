@@ -105,10 +105,12 @@ class RecoEnv1(AbstractEnv):
 
         # And update omega.
         if self.config.change_omega_for_bandits or self.state == organic:
-            self.omega = self.rng.normal(
+
+            self.omega = self.rng.normal( # Draw random samples from a normal (Gaussian) distribution
                 self.omega,
                 self.config.sigma_omega * omega_k, size=(self.config.K, 1)
             )
+
         self.context_switch = old_state != self.state
 
         if debug:

@@ -25,6 +25,8 @@ class BanditCount(Agent):
         self.last_product_viewed = None
         self.ctr = (self.clicks_a + 1) / (self.pulls_a + 2)
 
+        print(f"BanditCount %%%% num_products: {config.num_products}")
+
     def act(self, observation, reward, done):
         """Make a recommendation"""
 

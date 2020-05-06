@@ -15,9 +15,10 @@ random_args = {
 class RandomAgent(Agent):
     """The world's simplest agent!"""
 
-    def __init__(self, config = Configuration(random_args)):
+    def __init__(self, config=Configuration(random_args)):
         super(RandomAgent, self).__init__(config)
         self.rng = RandomState(config.random_seed)
+        print(f"RandomAgent %%%% num_products: {config.num_products}")
 
     def act(self, observation, reward, done):
         return {
