@@ -8,7 +8,7 @@ from .abstract import Agent
 
 # Default Arguments.
 bandit_mf_square_args = {
-    'num_products': 10,
+    'num_products': 1000,
     'embed_dim': 5,
     'mini_batch_size': 32,
     'loss_function': nn.BCEWithLogitsLoss(),
@@ -32,6 +32,7 @@ class BanditMFSquare(nn.Module, Agent):
         )
 
         # Initializing optimizer type.
+
         self.optimizer = self.config.optim_function(
             self.parameters(), lr = self.config.learning_rate
         )
@@ -51,29 +52,42 @@ class BanditMFSquare(nn.Module, Agent):
         return torch.sum(a * b, dim = 1)
 
     def get_logits(self):
+
         """Returns vector of product recommendation logits"""
+
         return self.forward(self.all_products)
 
     def update_lpv(self, observation):
+
         """Updates the last product viewed based on the observation"""
+
         assert (observation is not None)
         assert (observation.sessions() is not None)
+
         if observation.sessions():
             self.last_product_viewed = observation.sessions()[-1]['v']
 
+
+
     def act(self, observation, reward, done):
         with torch.no_grad():
+
             # Update last product viewed.
+
             self.update_lpv(observation)
 
             # Get logits for all possible actions.
+
             logits = self.get_logits()
 
             # No exploration strategy, choose maximum logit.
+
             action = logits.argmax().item()
+
             if self.config.with_ps_all:
                 all_ps = np.zeros(self.config.num_products)
                 all_ps[action] = 1.0
+
             else:
                 all_ps = ()
 
@@ -86,8 +100,12 @@ class BanditMFSquare(nn.Module, Agent):
                 },
             }
 
+
+
     def update_weights(self):
+
         """Update weights of embedding matrices using mini batch of data"""
+
         if len(self.train_data[0]) != 0:
             # Eliminate previous gradient.
             self.optimizer.zero_grad()
@@ -96,19 +114,26 @@ class BanditMFSquare(nn.Module, Agent):
             lpvs, actions, rewards = self.train_data
 
             # Calculating logit of action and last product viewed.
+
             logit = self.forward(np.array(actions), np.array(lpvs))
 
             # Converting reward into Tensor.
+
             reward = Tensor(np.array(rewards))
 
             # Calculating supervised loss.
+
             loss = self.config.loss_function(logit, reward)
             loss.backward()
 
             # Update weight parameters.
+
             self.optimizer.step()
 
     def train(self, observation, action, reward, done = False):
+
+        # print(f"bandit_mf **** train(): agent {self}")
+
         # Update last product viewed.
         self.update_lpv(observation)
 
@@ -116,9 +141,11 @@ class BanditMFSquare(nn.Module, Agent):
         self.curr_step += 1
 
         # Update weights of model once mini batch of data accumulated.
+
         if self.curr_step % self.config.mini_batch_size == 0:
             self.update_weights()
             self.train_data = ([], [], [])
+
         else:
             if action is not None and reward is not None:
                 self.train_data[0].append(self.last_product_viewed)

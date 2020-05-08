@@ -5,7 +5,7 @@ from ..envs.configuration import Configuration
 from .abstract import Agent
 
 bandit_count_args = {
-    'num_products': 10,
+    'num_products': 1000,
     'with_ps_all': False,
 }
 

@@ -4,7 +4,7 @@ from .abstract import Agent
 from ..envs.configuration import Configuration
 
 organic_count_args = {
-    'num_products': 10,
+    'num_products': 1000,
     'with_ps_all': False,
 }
 

@@ -5,7 +5,7 @@ from .abstract import AbstractFeatureProvider, ViewsFeaturesProvider, Model, Mod
 from ..envs.configuration import Configuration
 
 organic_user_count_args = {
-    'num_products': 10,
+    'num_products': 1000,
     'random_seed': np.random.randint(2 ** 31 - 1),
 
     # Select a Product randomly with the highest probability for the most frequently viewed product.

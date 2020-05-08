@@ -6,7 +6,7 @@ from .abstract import Agent
 
 # Default Arguments ----------------------------------------------------------
 organic_mf_square_args = {
-    'num_products': 10,
+    'num_products': 1000,
     'embed_dim': 5,
     'mini_batch_size': 32,
     'loss_function': torch.nn.CrossEntropyLoss(),

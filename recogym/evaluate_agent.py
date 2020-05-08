@@ -729,7 +729,9 @@ def plot_roi(
     return agent_roi_stats
 
 
+
 def verify_agents(env, number_of_users, agents):
+
     stat = {
         'Agent': [],
         '0.025': [],
@@ -738,16 +740,23 @@ def verify_agents(env, number_of_users, agents):
     }
 
     for agent_id in agents:
+
         stat['Agent'].append(agent_id)
         data = deepcopy(env).generate_logs(number_of_users, agents[agent_id])
+
         bandits = data[data['z'] == 'bandit']
+
         successes = bandits[bandits['c'] == 1].shape[0]
-        failures = bandits[bandits['c'] == 0].shape[0]
+        failures  = bandits[bandits['c'] == 0].shape[0]
+
         stat['0.025'].append(beta.ppf(0.025, successes + 1, failures + 1))
         stat['0.500'].append(beta.ppf(0.500, successes + 1, failures + 1))
         stat['0.975'].append(beta.ppf(0.975, successes + 1, failures + 1))
 
     return pd.DataFrame().from_dict(stat)
+
+
+
 
 
 def evaluate_IPS(agent, reco_log):
@@ -909,13 +918,18 @@ def verify_agents_recall_at_k(reco_log, agents, k=5):
 
 
 def plot_verify_agents(result):
+
     fig, ax = plt.subplots()
     ax.set_title('CTR Estimate for Different Agents')
+
     plt.errorbar(result['Agent'],
                  result['0.500'],
-                 yerr=(result['0.500'] - result['0.025'],
-                       result['0.975'] - result['0.500']),
+
+                 yerr=(result['0.500'] - result['0.025'], result['0.975'] - result['0.500']),
                  fmt='o',
+
                  capsize=4)
+
     plt.xticks(result['Agent'], result['Agent'], rotation='vertical')
+
     return fig

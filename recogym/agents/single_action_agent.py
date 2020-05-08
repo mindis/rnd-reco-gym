@@ -4,7 +4,7 @@ from recogym import Configuration
 from recogym.agents import Agent
 
 single_action_args = {
-    'num_products': 10,
+    'num_products': 1000,
     'random_seed': np.random.randint(2 ** 31 - 1),
     'with_ps_all': False,
 }

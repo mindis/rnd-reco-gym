@@ -6,6 +6,8 @@ import pickle
 import time
 from copy import deepcopy
 from pathlib import Path
+import pandas as pd
+
 
 import numpy as np
 from scipy.stats.distributions import beta
@@ -165,7 +167,9 @@ def _collect_stats(args):
                 True
             )
     else:
+
         # Offline Organic Training.
+
         for _ in trange(num_organic_offline_users, desc='Organic Users'):
             train_env.reset(unique_user_id)
             unique_user_id += 1
@@ -173,6 +177,7 @@ def _collect_stats(args):
             new_agent.train(new_observation, None, None, True)
 
         # Offline Organic and Bandit Training.
+
         for _ in trange(num_offline_users, desc='Users'):
             train_env.reset(unique_user_id)
             unique_user_id += 1
@@ -187,16 +192,21 @@ def _collect_stats(args):
             action, _, reward, done, _ = train_env.step_offline(
                 old_observation, reward, done
             )
+
             new_agent.train(old_observation, action, reward, True)
+
     print(f"END: Agent Training @ Epoch #{epoch} ({time.time() - start}s)")
 
     # Online Testing.
+
     print(f"START: Agent Evaluating @ Epoch #{epoch}")
+
     start = time.time()
 
     if epoch_with_random_reset:
         eval_env = deepcopy(env)
         eval_env.reset_random_seed(epoch)
+
     else:
         eval_env = env
 
@@ -204,6 +214,7 @@ def _collect_stats(args):
     rewards = stat_data[~np.isnan(stat_data['a'])]['c']
     successes = np.sum(rewards)
     failures = rewards.shape[0] - successes
+
     print(f"END: Agent Evaluating @ Epoch #{epoch} ({time.time() - start}s)")
 
     return {
@@ -212,11 +223,13 @@ def _collect_stats(args):
     }
 
 
+
+
 def test_agent(
         env,
         agent,
         num_offline_users=1000,
-        num_online_users=100,
+        num_online_users=1000,
         num_organic_offline_users=0,
         num_epochs=1,
         epoch_with_random_reset=False,
@@ -245,7 +258,50 @@ def test_agent(
         failures += result[AgentStats.FAILURES]
 
     return (
-        beta.ppf(0.500, successes + 1, failures + 1),
         beta.ppf(0.025, successes + 1, failures + 1),
+        beta.ppf(0.500, successes + 1, failures + 1),
         beta.ppf(0.975, successes + 1, failures + 1)
     )
+
+def add_agent_id (
+        agent_id,
+        a,
+        b,
+        c
+):
+
+    stat = {
+        'Agent': [],
+        '0.025': [],
+        '0.500': [],
+        '0.975': [],
+    }
+
+    stat['Agent'].append(agent_id)
+    stat['0.025'].append(a)
+    stat['0.500'].append(b)
+    stat['0.975'].append(c)
+
+    return stat
+
+def combine_stat (
+        stats
+):
+
+    res = {
+        'Agent': [],
+        '0.025': [],
+        '0.500': [],
+        '0.975': [],
+    }
+
+    for s in stats:
+
+        print(f"===> {s}")
+
+        res['Agent'].append(*s['Agent'])
+        res['0.025'].append(*s['0.025'])
+        res['0.500'].append(*s['0.500'])
+        res['0.975'].append(*s['0.975'])
+
+    return pd.DataFrame().from_dict(res)

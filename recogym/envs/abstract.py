@@ -18,8 +18,8 @@ from ..agents import Agent
 # Arguments shared between all environments.
 
 env_args = {
-    'num_products': 10,
-    'num_users': 100,
+    'num_products': 1000,
+    'num_users': 1000,
     'random_seed': np.random.randint(2 ** 31 - 1),
     # Markov State Transition Probabilities.
     'prob_leave_bandit': 0.01,
