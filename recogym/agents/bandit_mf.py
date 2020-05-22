@@ -20,13 +20,16 @@ bandit_mf_square_args = {
 
 # Model.
 class BanditMFSquare(nn.Module, Agent):
+
     def __init__(self, config = Configuration(bandit_mf_square_args)):
+
         nn.Module.__init__(self)
         Agent.__init__(self, config)
 
         self.product_embedding = nn.Embedding(
             self.config.num_products, self.config.embed_dim
         )
+
         self.user_embedding = nn.Embedding(
             self.config.num_products, self.config.embed_dim
         )
@@ -43,6 +46,7 @@ class BanditMFSquare(nn.Module, Agent):
         self.all_products = np.arange(self.config.num_products)
 
     def forward(self, products, users = None):
+
         if users is None:
             users = np.full(products.shape[0], self.last_product_viewed)
 
@@ -70,6 +74,7 @@ class BanditMFSquare(nn.Module, Agent):
 
 
     def act(self, observation, reward, done):
+
         with torch.no_grad():
 
             # Update last product viewed.
@@ -85,10 +90,12 @@ class BanditMFSquare(nn.Module, Agent):
             action = logits.argmax().item()
 
             if self.config.with_ps_all:
+
                 all_ps = np.zeros(self.config.num_products)
                 all_ps[action] = 1.0
 
             else:
+
                 all_ps = ()
 
             return {
@@ -130,9 +137,12 @@ class BanditMFSquare(nn.Module, Agent):
 
             self.optimizer.step()
 
+
+            
+
     def train(self, observation, action, reward, done = False):
 
-        # print(f"bandit_mf **** train(): agent {self}")
+        # print('BanditMFSquare train()')
 
         # Update last product viewed.
         self.update_lpv(observation)

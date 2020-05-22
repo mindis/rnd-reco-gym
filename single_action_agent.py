@@ -9,29 +9,33 @@ single_action_args = {
     'with_ps_all': False,
 }
 
+debug = False
+
 class SingleActionAgent(Agent):
 
     def __init__(self, config=Configuration(single_action_args)):
-
+        super(SingleActionAgent, self).__init__(config)
         print(f"SingleActionAgent %%%% num_products: {config.num_products}")
 
-        super(SingleActionAgent, self).__init__(config)  # Set number of products as an attribute of the Agent.
-
-        self.organic_views = np.zeros(
-            self.config.num_products)  # Track number of times each item viewed in Organic session.
+        self.organic_views = np.zeros(self.config.num_products)
 
         self.act_counter = 0
         self.train_counter = 0
 
     def train(self, observation, action, reward, done):
 
-        if observation:
+        self.train_counter += 1
 
-            for session in observation.sessions():  # -- LOOP
+        if debug:
+            print(f"\nSingleActionAgent %%%% TRAIN {self.train_counter} observation: {observation.sessions()}")
 
-                self.organic_views[session['v']] += 1
 
     def act(self, observation, reward, done):
+
+        self.act_counter += 1
+
+        if debug:
+            print(f"\nSingleActionAgent %%%% ACT {self.act_counter} act observation: {observation.sessions()}")
 
         prob = self.organic_views / sum(self.organic_views)
 
@@ -45,4 +49,3 @@ class SingleActionAgent(Agent):
             }
         }
 
-# %%

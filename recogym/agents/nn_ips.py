@@ -50,6 +50,7 @@ class NeuralNet(nn.Module):
     def __init__(self, config):
         super(NeuralNet, self).__init__()
         self.config = config
+
         self.model = nn.Sequential(
             nn.Linear(self.config.num_products, self.config.num_hidden),
             nn.Sigmoid(),
@@ -72,6 +73,7 @@ class NnIpsModelBuilder(AbstractFeatureProvider):
         super(NnIpsModelBuilder, self).__init__(config)
 
     def build(self):
+
         model = NeuralNet(self.config)
         criterion = IpsLoss(self.config)
         optimizer = optim.SGD(model.parameters(), lr = self.config.learning_rate)
@@ -109,8 +111,11 @@ class NnIpsModelBuilder(AbstractFeatureProvider):
                     self.rng = RandomState(self.config.random_seed)
 
             def act(self, observation, features):
+
                 prob = self.model.forward(features)[0, :]
+
                 if self.config.select_randomly:
+
                     prob = prob.detach().numpy()
                     action = self.rng.choice(
                         np.array(self.config.num_products),
@@ -121,12 +126,15 @@ class NnIpsModelBuilder(AbstractFeatureProvider):
                     else:
                         ps_all = ()
                 else:
+
                     action = torch.argmax(prob).item()
+
                     if self.config.with_ps_all:
                         ps_all = np.zeros(self.config.num_products)
                         ps_all[action] = 1.0
                     else:
                         ps_all = ()
+
                 return {
                     **super().act(observation, features),
                     **{

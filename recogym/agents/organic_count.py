@@ -4,24 +4,28 @@ from .abstract import Agent
 from ..envs.configuration import Configuration
 
 organic_count_args = {
-    'num_products': 1000,
+    'num_products': 100,
     'with_ps_all': False,
 }
 
 
 # From Keras.
 def to_categorical(y, num_classes = None, dtype = 'float32'):
-    """Converts a class vector (integers) to binary class matrix.
-    E.g. for use with categorical_crossentropy.
+
+    """Converts a class vector (integers) to binary class matrix. E.g. for use with categorical_crossentropy.
+
     # Arguments
-        y: class vector to be converted into a matrix
-            (integers from 0 to num_classes).
+
+        y: class vector to be converted into a matrix (integers from 0 to num_classes).
+
         num_classes: total number of classes.
-        dtype: The data type expected by the input, as a string
-            (`float32`, `float64`, `int32`...)
+
+        dtype: The data type expected by the input, as a string (`float32`, `float64`, `int32`...)
+
     # Returns
-        A binary matrix representation of the input. The classes axis
-        is placed last.
+
+        A binary matrix representation of the input. The classes axis is placed last.
+
     """
     y = np.array(y, dtype = 'int')
     input_shape = y.shape
@@ -39,6 +43,7 @@ def to_categorical(y, num_classes = None, dtype = 'float32'):
 
 
 class OrganicCount(Agent):
+
     """
     Organic Count
 
@@ -52,16 +57,19 @@ class OrganicCount(Agent):
         self.corr = None
 
     def act(self, observation, reward, done):
+
         """Make a recommendation"""
 
         self.update_lpv(observation)
 
         action = self.co_counts[self.last_product_viewed, :].argmax()
+
         if self.config.with_ps_all:
             ps_all = np.zeros(self.config.num_products)
             ps_all[action] = 1.0
         else:
             ps_all = ()
+
         return {
             **super().act(observation, reward, done),
             **{
@@ -72,16 +80,26 @@ class OrganicCount(Agent):
         }
 
     def train(self, observation, action, reward, done = False):
+
+        # if len(observation.sessions()) > 0:
+        #      print(f"organic_count: TRAIN() sessions #{observation.sessions()}")
+
         """Train the model in an online fashion"""
+
         if observation.sessions():
+
             A = to_categorical(
                 [session['v'] for session in observation.sessions()],
                 self.config.num_products
             )
+
             B = A.sum(0).reshape((self.config.num_products, 1))
-            self.co_counts = self.co_counts + np.matmul(B, B.T)
+
+            self.co_counts = self.co_counts + np.matmul(B, B.T) # -- UPDATE VIEWS ARRAY - USED IN ACT()
 
     def update_lpv(self, observation):
+
         """updates the last product viewed based on the observation"""
+
         if observation.sessions():
             self.last_product_viewed = observation.sessions()[-1]['v']

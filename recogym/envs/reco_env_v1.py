@@ -16,6 +16,7 @@ from .abstract import AbstractEnv, env_args, organic
 
 
 debug = False
+
 className = "envs/reco_env_v1.py"
 
 # inherit most arguments from abstract class
@@ -56,12 +57,16 @@ class RecoEnv1(AbstractEnv):
         self.cached_state_seed = None
 
     def set_static_params(self):
+
         # Initialise the state transition matrix which is 3 by 3
         # high level transitions between organic, bandit and leave.
+
         self.state_transition = np.array([
-            [0, self.config.prob_organic_to_bandit, self.config.prob_leave_organic],
-            [self.config.prob_bandit_to_organic, 0, self.config.prob_leave_organic],
-            [0.0, 0.0, 1.]
+            [0,                                  self.config.prob_organic_to_bandit, self.config.prob_leave_organic], # SUM SHOULD BE 1
+
+            [self.config.prob_bandit_to_organic, 0,                                  self.config.prob_leave_organic],
+            
+            [0.0,                                0.0,                                1.]
         ])
 
         self.state_transition[0, 0] = 1 - sum(self.state_transition[0, :])
@@ -81,6 +86,8 @@ class RecoEnv1(AbstractEnv):
         # Initialise beta, mu_bandit for all products (Bandit).
         self.generate_beta(self.config.number_of_flips)
 
+        
+
     # Create a new user.
     def reset(self, user_id=0):
         super().reset(user_id)
@@ -92,12 +99,31 @@ class RecoEnv1(AbstractEnv):
     # Update user state to one of (organic, bandit, leave) and their omega (latent factor).
     def update_state(self):
 
-        if debug:
-            print(f"{className} update_state () ---- old state {self.state}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+        # if debug:
+        #     print(f"    {className} update_state() from state {self.state}")
+
+        # if debug:
+        #     print(f"{className} update_state () ---- old state {self.state}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+
 
         old_state = self.state
-        self.state = self.rng.choice(3, p=self.state_transition[self.state, :])
+
+        # print(f"{className} update_state () self.state {self.state}")
+        # print(f"{className} update_state () self.state_transition {self.state_transition}")
+
+        prob = self.state_transition[self.state, :]
+
+        # if debug:
+        #     print(f"    {className} update_state() state_transition \n{self.state_transition}")
+        #     print(f"    {className} update_state() prob {prob}")
+
+        self.state = self.rng.choice(3, p = prob)
+
+        # if debug:
+        #     print(f"    {className} update_state() new RANDOM state {self.state}")
+
         assert (hasattr(self, 'time_generator'))
+
         old_time = self.current_time
         self.current_time = self.time_generator.new_time()
         time_delta = self.current_time - old_time
@@ -113,35 +139,49 @@ class RecoEnv1(AbstractEnv):
 
         self.context_switch = old_state != self.state
 
-        if debug:
-            print(f"{className} update_state () ---- new state {self.state}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+        # if debug:
+        #     print(f"    {className} update_state() new state {self.state}")
+
+        # if debug:
+        #     print(f"{className} update_state () ---- new state {self.state}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+
+
+
 
 
 
     # Sample a click as response to recommendation when user in BANDIT STATE
     # click ~ Bernoulli().
+
     def draw_click(self, recommendation):
         if debug:
-            print(f"{className} draw_click () ---- recommendation {recommendation}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+            print(f"    {className} draw_click() state {self.state} recommendation {recommendation}")
+
+
+        # if debug:
+        #     print(f"{className} draw_click () recommendation {recommendation}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+
 
         # Personalised CTR for every recommended product.
 
         if self.config.change_omega_for_bandits or self.context_switch:
+
             if debug:
-                print(f"{className} draw_click () ---- self.config.change_omega_for_bandits or self.context_switch")
+                print(f"    {className} draw_click() state {self.state} self.config.change_omega_for_bandits or self.context_switch")
+
             self.cached_state_seed = (
                     self.beta @ self.omega + self.mu_bandit
             ).ravel()
 
         assert self.cached_state_seed is not None
 
-        if debug:
-            print(f"{className} draw_click () ---- cached_state_seed {self.cached_state_seed}")
+        # if debug:
+        #     print(f"    {className} draw_click () cached_state_seed {self.cached_state_seed}")
 
         ctr = ff(self.cached_state_seed)
 
-        if debug:
-            print(f"{className} draw_click () ---- ctr {ctr}, ctr[recommendation] {ctr[recommendation]}")
+        # if debug:
+        #     print(f"    {className} draw_click () ctr {ctr}, ctr[recommendation] {ctr[recommendation]}")
 
         click = self.rng.choice(
             [0, 1],
@@ -149,9 +189,10 @@ class RecoEnv1(AbstractEnv):
         )
 
         if debug:
-            print(f"{className} draw_click () ---- return click {click}, recommendation {recommendation}")
+            print(f"    {className} draw_click() state {self.state} return click {click}, recommendation {recommendation}")
 
         return click
+
 
 
 
@@ -159,14 +200,18 @@ class RecoEnv1(AbstractEnv):
     def update_product_view(self):
 
         if debug:
-            print(f"{className} update_product_view () ---- START, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+            print(f"     {className} update_product_view () state {self.state}")
+
+        # if debug:
+        #     print(f"     {className} update_product_view () ---- START, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+
 
         log_uprob = (self.Gamma @ self.omega + self.mu_organic).ravel()
         log_uprob = log_uprob - max(log_uprob)
         uprob = np.exp(log_uprob)
 
-        if debug:
-            print(f"{className} update_product_view () ---- uprob {uprob}")
+        # if debug:
+        #     print(f"     {className} update_product_view () ---- uprob {uprob}")
 
         self.product_view = np.int16(
             self.rng.choice(
@@ -176,8 +221,10 @@ class RecoEnv1(AbstractEnv):
         )
 
         if debug:
-            print(f"{className} update_product_view () ---- product_view updated {self.product_view}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
+            print(f"     {className} update_product_view() state {self.state} product_view updated {self.product_view}")
 
+        # if debug:
+        #     print(f"     {className} update_product_view () product_view updated {self.product_view}, \nomega {self.omega}, \ngamma {self.Gamma}, \nbeta {self.beta}")
 
 
     def normalize_beta(self):
@@ -201,18 +248,23 @@ class RecoEnv1(AbstractEnv):
         index = np.arange(P)
 
         prod_cov = self.Gamma @ self.Gamma.T
+
         # We are always most correlated with ourselves so remove the diagonal.
+
         prod_cov = prod_cov - np.diag(np.diag(prod_cov))
 
         prod_cov_flat = prod_cov.flatten()
 
         already_used = set()
         flips = 0
+
         for p in prod_cov_flat.argsort()[::-1]:  # Find the most correlated entries
+
             # Convert flat indexes to 2d indexes
             ii, jj = int(p / P), np.mod(p, P)
-            # Do flips between the most correlated entries
-            # provided neither the row or col were used before.
+
+            # Do flips between the most correlated entries provided neither the row or col were used before.
+
             if not (ii in already_used or jj in already_used):
                 index[ii] = jj  # Do a flip.
                 index[jj] = ii

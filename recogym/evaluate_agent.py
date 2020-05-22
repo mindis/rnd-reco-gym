@@ -59,6 +59,7 @@ def evaluate_agent(
     initial_agent = deepcopy(agent)
 
     unique_user_id = 0
+
     for u in range(num_initial_train_users):
         env.reset(unique_user_id + u)
         agent.reset()
@@ -742,7 +743,8 @@ def verify_agents(env, number_of_users, agents):
     for agent_id in agents:
 
         stat['Agent'].append(agent_id)
-        data = deepcopy(env).generate_logs(number_of_users, agents[agent_id])
+        
+        data = deepcopy(env).generate_logs(number_of_users, agents[agent_id]) # --> generate_logs() --> step_offline()
 
         bandits = data[data['z'] == 'bandit']
 

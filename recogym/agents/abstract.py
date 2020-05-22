@@ -53,6 +53,9 @@ class ModelBuilder:
         self.reset()
 
     def train(self, observation, action, reward, done):
+
+        print ("--- ABSTRACT train() ---")
+
         """
         Train a Model
 
@@ -296,6 +299,10 @@ class ModelBasedAgent(Agent):
         self.model = None
 
     def train(self, observation, action, reward, done=False):
+
+        # if len(observation.sessions()) > 0:
+        #      print(f"agents/abstract: TRAIN() sessions #{observation.sessions()}")
+
         self.model_builder.train(observation, action, reward, done)
 
     def act(self, observation, reward, done):

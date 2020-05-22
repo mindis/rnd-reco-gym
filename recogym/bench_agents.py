@@ -1,4 +1,4 @@
-import datetime
+
 import hashlib
 import json
 import os
@@ -6,7 +6,6 @@ import pickle
 import time
 from copy import deepcopy
 from pathlib import Path
-import pandas as pd
 
 
 import numpy as np
@@ -80,7 +79,8 @@ def _collect_stats(args):
     unique_user_id = 0
     new_agent = deepcopy(agent)
 
-    print(f"START: Agent Training @ Epoch #{epoch}")
+    print(f"START: Agent {new_agent} Training: offline users {num_offline_users} @ Epoch #{epoch}")
+
     start = time.time()
 
     if epoch_with_random_reset:
@@ -168,38 +168,44 @@ def _collect_stats(args):
             )
     else:
 
-        # Offline Organic Training.
+        # -------------- Offline Organic Training --------------
 
         for _ in trange(num_organic_offline_users, desc='Organic Users'):
+
             train_env.reset(unique_user_id)
             unique_user_id += 1
+
             new_observation, _, _, _ = train_env.step(None)
             new_agent.train(new_observation, None, None, True)
 
-        # Offline Organic and Bandit Training.
+        # --------------- Offline Organic and Bandit Training --------------
 
-        for _ in trange(num_offline_users, desc='Users'):
+        for _ in trange (num_offline_users, desc='Users'):
+
             train_env.reset(unique_user_id)
             unique_user_id += 1
             new_observation, _, done, reward = train_env.step(None)
+
             while not done:
+
                 old_observation = new_observation
-                action, new_observation, reward, done, _ = train_env.step_offline(
-                    old_observation, reward, done
-                )
+
+                action, new_observation, reward, done, _ = train_env.step_offline(old_observation, reward, done)
+
                 new_agent.train(old_observation, action, reward, False)
+
+
             old_observation = new_observation
-            action, _, reward, done, _ = train_env.step_offline(
-                old_observation, reward, done
-            )
+
+            action, _, reward, done, _ = train_env.step_offline(old_observation, reward, done)
 
             new_agent.train(old_observation, action, reward, True)
 
     print(f"END: Agent Training @ Epoch #{epoch} ({time.time() - start}s)")
 
-    # Online Testing.
+    # -------------------- Online Testing --------------------
 
-    print(f"START: Agent Evaluating @ Epoch #{epoch}")
+    print(f"START: Agent Evaluating online users {num_online_users} @ Epoch #{epoch}")
 
     start = time.time()
 
@@ -210,7 +216,8 @@ def _collect_stats(args):
     else:
         eval_env = env
 
-    stat_data = eval_env.generate_logs(num_offline_users=num_online_users, agent=new_agent)
+    stat_data = eval_env.generate_logs(num_offline_users=num_online_users, agent=new_agent)   # ---- GENERATE LOGS
+
     rewards = stat_data[~np.isnan(stat_data['a'])]['c']
     successes = np.sum(rewards)
     failures = rewards.shape[0] - successes
@@ -252,6 +259,11 @@ def test_agent(
         }
         for epoch in range(num_epochs)
     ]
+
+    print(f"test_agent agent #{agent})")
+    print(f"test_agent num_offline_users #{num_offline_users})")
+    print(f"test_agent num_online_users #{num_online_users})")
+    print(f"test_agent num_organic_offline_users #{num_organic_offline_users})")
 
     for result in [_collect_stats(args) for args in argss]:
         successes += result[AgentStats.SUCCESSES]
