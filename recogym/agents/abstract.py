@@ -54,7 +54,7 @@ class ModelBuilder:
 
     def train(self, observation, action, reward, done):
 
-        print ("--- ABSTRACT train() ---")
+        # print ("--- ABSTRACT train() ---")
 
         """
         Train a Model
