@@ -35,6 +35,7 @@ def build_train_data(logs, feature_provider):
             # the taken action the obtained reward and the used probabilities.
             
             feature_provider.observe(Observation(context, sessions))
+
             user_states.append(feature_provider.features(None).copy())
 
             actions.append(row['a'])
@@ -86,6 +87,8 @@ class LikelihoodAgent(Agent):
 
         """Create the features that are used to estimate the expected reward from the user state"""
 
+        # print(f"\nLikelihoodAgent train() features size {len(user_state) * self.num_products}")
+
         features = np.zeros(len(user_state) * self.num_products)
 
         # if debug:
@@ -130,7 +133,7 @@ class LikelihoodAgent(Agent):
 
         print(f"\nrun model.fit rewards size {len(rewards)}")
 
-        self.model.fit(features, rewards) # ----- LEARN THE MODEL BY REWARDS ! X = VIEWS, Y = REWARDS ---> PROBABILITY OF REWARD
+        self.model.fit(features, rewards) # ----- LEARN THE MODEL BY REWARDS ! X = FEATURES/VIEWS, Y = REWARDS ---> PROBABILITY OF REWARD
 
 
 
