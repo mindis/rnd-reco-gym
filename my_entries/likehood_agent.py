@@ -7,7 +7,7 @@ from recogym.agents import Agent
 from recogym.envs.session import OrganicSessions
 from recogym.agents import FeatureProvider
 
-debug = False
+debug = True
 
 
 def build_train_data(logs, feature_provider):
@@ -85,6 +85,13 @@ class LikelihoodAgent(Agent):
 
     def _create_features(self, user_state, action):
 
+        # Look at the data and see how it maps into the features - which is the combination of the history
+        # and the actions and the label, which is clicks.
+        # Note that only the bandit events correspond to records in the training data.
+
+        # To make a personalization, it is necessary to cross the action and history features.
+        # _Why_ ?  We do the simplest possible to cross an element-wise Kronecker product.
+
         """Create the features that are used to estimate the expected reward from the user state"""
 
         # print(f"\nLikelihoodAgent train() features size {len(user_state) * self.num_products}")
@@ -107,10 +114,44 @@ class LikelihoodAgent(Agent):
         #           f"\nRETURN features {features}")
 
         return features
-    
 
 
 
+        # The "features" are represented by matrix of organic product views where horizontal position is product id 0-9.
+        # The every line is organic views and vertical offset is action id / recommendation product (7 for first matrix and 2 for the next one). Looks they call it "Kronecker product".
+        #
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 1. 2. 1. 0. 0. 0. 1. 2. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        #
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 1. 2. 1. 0. 0. 0. 1. 2. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        #
+        # .... there are 59 such matrices of observations in this configuration.
+        #
+        # The "rewards" is represented by array of size 59, 1 = click at bandit offer, there were 59 bandit actions 57 failures, 2 successful,  1 = click on bandit offer:
+        #
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 1. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+        # 1. 0. 0. 0. 0. 0. 0. 0. 0.
 
     def train(self, logs):
 
@@ -127,11 +168,12 @@ class LikelihoodAgent(Agent):
 
         if debug:
             print(f"\nLikelihoodAgent train_from_logs() "
-                  f"\nmodel.fit <- features {features} "
-                  f"\nmodel.fit <- rewards {rewards}")
+                  f"\nmodel.fit <- features size {len(features)}")
+            
+            for feature in features:
+                print(f"\nmodel.fit <- feature size {len(feature)} : {feature}")
 
-
-        print(f"\nrun model.fit rewards size {len(rewards)}")
+            print(f"\nmodel.fit <- rewards size {len(rewards)} \n{rewards}")
 
         self.model.fit(features, rewards) # ----- LEARN THE MODEL BY REWARDS ! X = FEATURES/VIEWS, Y = REWARDS ---> PROBABILITY OF REWARD
 
