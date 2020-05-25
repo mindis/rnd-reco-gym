@@ -7,7 +7,7 @@ from recogym.agents import Agent
 from recogym.envs.session import OrganicSessions
 from recogym.agents import FeatureProvider
 
-debug = True
+debug = False
 
 
 def build_train_data(logs, feature_provider):
