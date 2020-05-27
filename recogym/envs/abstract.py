@@ -26,8 +26,8 @@ env_args = {
     'prob_leave_bandit': 0.01,    # STOP PROBABILITY, 0.01 - DEFAULT
     'prob_leave_organic': 0.01,    # STOP PROBABILITY, 0.01 - DEFAULT
 
-    'prob_bandit_to_organic': 0.05,
-    'prob_organic_to_bandit': 0.25,
+    'prob_bandit_to_organic': 0.25,
+    'prob_organic_to_bandit': 0.05,
     
     'normalize_beta': False,
     'with_ps_all': False
